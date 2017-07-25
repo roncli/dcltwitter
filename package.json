@@ -1,0 +1,22 @@
+{
+    "name": "dcltwitter",
+    "productName": "DCL Twitter",
+    "version": "0.0.1",
+    "description": "The Twitter bot for the Descent Champions Ladder.",
+    "main": "index.js",
+    "author": {
+        "email": "roncli@roncli.com",
+        "name": "Ronald M. Clifford",
+        "url": "http://www.roncli.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/roncli/dcltwitter"
+    },
+    "license": "MIT",
+    "dependencies": {
+        "jquery": "3.2.1",
+        "jsdom": "11.1.0",
+        "twitter": "1.7.1"
+    }
+}
