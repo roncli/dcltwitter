@@ -84,157 +84,159 @@ const {get} = require("http"),
         "unrated-gold": false,
         "unrated-diamond": false
     };
-let maxId = 0,
-    minId = Infinity,
-    lastMatchId = 0;
 
-const getPage = (pageId) => {
-    console.log("Page", pageId, minId, maxId);
-    return new Promise((resolve, reject) => {
-        get(`http://descentchampions.org/recent_matches.php?page=${pageId}`, (res) => {
-            let body = "";
+class Update {
+    constructor() {
+        this.maxId = 0;
+        this.minId = Infinity;
+        this.lastMatchId = 0;
+    }
 
-            res.on("data", (data) => {
-                body += data;
-            });
+    getPage(pageId) {
+        const update = Update;
 
-            res.on("end", () => {
-                body = `<div>${body.replace(/^[\s\S]*<body.*?>|<\/body>[\s\S]*$/ig, "")}</div>`;
+        return new Promise((resolve, reject) => {
+            get(`http://descentchampions.org/recent_matches.php?page=${pageId}`, (res) => {
+                let body = "";
 
-                $(body).find(".content > a[href^=view_match]")
-                    .each((index, el) => {
-                        const game = $(el),
-                            match = viewMatchRegex.exec(game.attr("href"));
+                res.on("data", (data) => {
+                    body += data;
+                });
 
-                        if (match && match[1]) {
-                            const gameId = match[1];
+                res.on("end", () => {
+                    body = `<div>${body.replace(/^[\s\S]*<body.*?>|<\/body>[\s\S]*$/ig, "")}</div>`;
 
-                            maxId = Math.max(maxId, gameId);
-                            minId = Math.min(minId, gameId);
+                    $(body).find(".content > a[href^=view_match]")
+                        .each((index, el) => {
+                            const game = $(el),
+                                match = viewMatchRegex.exec(game.attr("href"));
 
-                            if (gameId > lastMatchId) {
-                                const leftScore = +game.find(".left_player .score").text(),
-                                    rightScore = +game.find(".right_player .score").text(),
-                                    leftTier = game.find(".left_player:first() > span:last()").attr("class"),
-                                    rightTier = game.find(".right_player:first() > span:first()").attr("class"),
-                                    tiers = `${leftTier}-${rightTier}`,
-                                    suicides = game.find("td[colspan=2] span:not([class])").text();
+                            if (match && match[1]) {
+                                const gameId = match[1];
 
-                                let tags = "";
+                                update.maxId = Math.max(update.maxId, gameId);
+                                update.minId = Math.min(update.minId, gameId);
 
-                                // Overtime
-                                if (leftScore > 20) {
-                                    tags += " #overtime";
+                                if (gameId > this.lastMatchId) {
+                                    const leftScore = +game.find(".left_player .score").text(),
+                                        rightScore = +game.find(".right_player .score").text(),
+                                        leftTier = game.find(".left_player:first() > span:last()").attr("class"),
+                                        rightTier = game.find(".right_player:first() > span:first()").attr("class"),
+                                        tiers = `${leftTier}-${rightTier}`,
+                                        suicides = game.find("td[colspan=2] span:not([class])").text();
+
+                                    let tags = "";
+
+                                    // Overtime
+                                    if (leftScore > 20) {
+                                        tags += " #overtime";
+                                    }
+
+                                    // Domination
+                                    if (dominationMatrix[tiers] && rightScore <= dominationMatrix[tiers]) {
+                                        tags += " #domination";
+                                    }
+
+                                    // Shutout
+                                    if (rightScore <= 0) {
+                                        tags += " #shutout";
+                                    }
+
+                                    // Threat
+                                    if (threatMatrix[tiers] && rightScore >= 15) {
+                                        tags += " #threat";
+                                    }
+
+                                    // Dark Horse
+                                    if (darkHorseMatrix[tiers]) {
+                                        tags += " #darkhorse";
+                                    }
+
+                                    // Bus Driver
+                                    if (!game.find(".home:last()").is(".hide_home")) {
+                                        tags += " #busdriver";
+                                    }
+
+                                    // Home Defense
+                                    if (!game.find(".home:first()").is(".hide_home")) {
+                                        tags += " #homedefense";
+                                    }
+
+                                    // Trophies
+                                    switch (game.find(".trophy_icon").attr("src")) {
+                                        case "img/awards/trophies/disorient_trophy.png":
+                                            tags += " #disorienttrophy";
+                                            break;
+                                        case "img/awards/trophies/dog_trophy.png":
+                                            tags += " #dogtrophy";
+                                            break;
+                                        case "img/awards/trophies/rat_trophy.png":
+                                            tags += " #rattrophy";
+                                            break;
+                                        case "img/awards/trophies/blind_trophy.png":
+                                            tags += " #blindtrophy";
+                                            break;
+                                        case "img/awards/trophies/fusion_trophy.png":
+                                            tags += " #fusiontrophy";
+                                            break;
+                                        case "img/awards/trophies/d2_trophy.png":
+                                            tags += " #d2trophy";
+                                            break;
+                                        case "img/awards/trophies/x4_trophy.png":
+                                            tags += " #x4trophy";
+                                            break;
+                                        default:
+                                            // Subgame
+                                            switch (game.find("td.events:first()").text()) {
+                                                case "Blind":
+                                                    tags += " #blind";
+                                                    break;
+                                                case "Disorientation":
+                                                    tags += " #disorientation";
+                                                    break;
+                                                case "Dogfighting":
+                                                    tags += " #dogfighting";
+                                                    break;
+                                                case "Fusion":
+                                                    tags += " #fusion";
+                                                    break;
+                                                case "Gauss'nMercs":
+                                                    tags += " #gaussnmercs";
+                                                    break;
+                                                case "Megas / Shakers":
+                                                    tags += " #megasshakers";
+                                                    break;
+                                                case "Ratting":
+                                                    tags += " #ratting";
+                                                    break;
+                                            }
+                                    }
+
+                                    gamesToPost[gameId] = `${leftTier.replace(leftTier[0], leftTier[0].toUpperCase())} #${game.find(".left_player .rank_badge").text()
+                                        .substring(2)} ${game.find(".left_player .pilot_name").text()} def ${rightTier.replace(rightTier[0], rightTier[0].toUpperCase())} #${game.find(".right_player .rank_badge").text()
+                                        .substring(2)} ${game.find(".right_player .pilot_name").text()} ${leftScore} to ${rightScore}${suicides === "" ? "" : ` w/ ${game.find("span:not([class]):first()").text()}`} ${game.find(".level_name").text()}${tags === "" ? "" : tags} http://descentchampions.org/${game.attr("href")}`;
                                 }
-
-                                // Domination
-                                if (dominationMatrix[tiers] && rightScore <= dominationMatrix[tiers]) {
-                                    tags += " #domination";
-                                }
-
-                                // Shutout
-                                if (rightScore <= 0) {
-                                    tags += " #shutout";
-                                }
-
-                                // Threat
-                                if (threatMatrix[tiers] && rightScore >= 15) {
-                                    tags += " #threat";
-                                }
-
-                                // Dark Horse
-                                if (darkHorseMatrix[tiers]) {
-                                    tags += " #darkhorse";
-                                }
-
-                                // Bus Driver
-                                if (!game.find(".home:last()").is(".hide_home")) {
-                                    tags += " #busdriver";
-                                }
-
-                                // Home Defense
-                                if (!game.find(".home:first()").is(".hide_home")) {
-                                    tags += " #homedefense";
-                                }
-
-                                // Trophies
-                                switch (game.find(".trophy_icon").attr("src")) {
-                                    case "img/awards/trophies/disorient_trophy.png":
-                                        tags += " #disorienttrophy";
-                                        break;
-                                    case "img/awards/trophies/dog_trophy.png":
-                                        tags += " #dogtrophy";
-                                        break;
-                                    case "img/awards/trophies/rat_trophy.png":
-                                        tags += " #rattrophy";
-                                        break;
-                                    case "img/awards/trophies/blind_trophy.png":
-                                        tags += " #blindtrophy";
-                                        break;
-                                    case "img/awards/trophies/fusion_trophy.png":
-                                        tags += " #fusiontrophy";
-                                        break;
-                                    case "img/awards/trophies/d2_trophy.png":
-                                        tags += " #d2trophy";
-                                        break;
-                                    case "img/awards/trophies/x4_trophy.png":
-                                        tags += " #x4trophy";
-                                        break;
-                                    default:
-                                        // Subgame
-                                        switch (game.find("td.events:first()").text()) {
-                                            case "Blind":
-                                                tags += " #blind";
-                                                break;
-                                            case "Disorientation":
-                                                tags += " #disorientation";
-                                                break;
-                                            case "Dogfighting":
-                                                tags += " #dogfighting";
-                                                break;
-                                            case "Fusion":
-                                                tags += " #fusion";
-                                                break;
-                                            case "Gauss'nMercs":
-                                                tags += " #gaussnmercs";
-                                                break;
-                                            case "Megas / Shakers":
-                                                tags += " #megasshakers";
-                                                break;
-                                            case "Ratting":
-                                                tags += " #ratting";
-                                                break;
-                                            default:
-                                                //console.log(game.find(".events:first()").text());
-                                                break;
-                                        }
-                                }
-
-                                gamesToPost[gameId] = `${leftTier.replace(leftTier[0], leftTier[0].toUpperCase())} #${game.find(".left_player .rank_badge").text()
-                                    .substring(2)} ${game.find(".left_player .pilot_name").text()} def ${rightTier.replace(rightTier[0], rightTier[0].toUpperCase())} #${game.find(".right_player .rank_badge").text()
-                                    .substring(2)} ${game.find(".right_player .pilot_name").text()} ${leftScore} to ${rightScore}${suicides === "" ? "" : ` w/ ${game.find("span:not([class]):first()").text()}`} ${game.find(".level_name").text()}${tags === "" ? "" : tags} http://descentchampions.org/${game.attr("href")}`;
                             }
-                        }
-                    });
+                        });
 
-                if (minId > lastMatchId) {
-                    getPage(pageId + 1).then(resolve)
-                        .catch(reject);
-                } else {
-                    resolve();
-                }
+                    if (update.minId > update.lastMatchId) {
+                        update.getPage(pageId + 1).then(resolve)
+                            .catch(reject);
+                    } else {
+                        resolve();
+                    }
+                });
+            }).on("error", (err) => {
+                reject(err);
             });
-        }).on("error", (err) => {
-            reject(err);
         });
-    });
-};
+    }
+}
 
-process.on("message", (data) => {
-    console.log(data);
-    lastMatchId = data.start;
+process.on("message", () => {
+    const update = new Update();
 
-    getPage(0).then(() => {
+    update.getPage(0).then(() => {
         console.log(gamesToPost);
     })
         .catch(console.log);
