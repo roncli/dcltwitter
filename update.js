@@ -1,9 +1,8 @@
 const {get} = require("http"),
-    db = require("./database"),
-    viewMatchRegex = /view_match\.php\?id=(\d+)/,
     {JSDOM} = require("jsdom"),
     $ = require("jquery")(new JSDOM().window),
-    gamesToPost = {},
+    db = require("./database"),
+    viewMatchRegex = /view_match\.php\?id=(\d+)/,
     dominationMatrix = {
         "bronze-unrated": 10,
         "bronze-bronze": 10,
@@ -86,15 +85,49 @@ const {get} = require("http"),
         "unrated-diamond": false
     };
 
+//  #   #             #          #
+//  #   #             #          #
+//  #   #  # ##    ## #   ###   ####    ###
+//  #   #  ##  #  #  ##      #   #     #   #
+//  #   #  ##  #  #   #   ####   #     #####
+//  #   #  # ##   #  ##  #   #   #  #  #
+//   ###   #       ## #   ####    ##    ###
+//         #
+//         #
+/**
+ * Updates the DCL Twitter account with the latest matches.
+ */
 class Update {
+    //                           #                       #
+    //                           #                       #
+    //  ##    ##   ###    ###   ###   ###   #  #   ##   ###    ##   ###
+    // #     #  #  #  #  ##      #    #  #  #  #  #      #    #  #  #  #
+    // #     #  #  #  #    ##    #    #     #  #  #      #    #  #  #
+    //  ##    ##   #  #  ###      ##  #      ###   ##     ##   ##   #
+    /**
+     * Creates a new instance of the DCL Twitter update class.
+     */
     constructor() {
         this.maxId = 0;
         this.minId = Infinity;
         this.lastMatchId = 0;
+        this.gamesToPost = {};
     }
 
+    //              #    ###
+    //              #    #  #
+    //  ###   ##   ###   #  #   ###   ###   ##
+    // #  #  # ##   #    ###   #  #  #  #  # ##
+    //  ##   ##     #    #     # ##   ##   ##
+    // #      ##     ##  #      # #  #      ##
+    //  ###                           ###
+    /**
+     * Gets the next page of stats.
+     * @param {number} pageId The 0-based page ID to start from.  Will recurse until it exceeds the lastMatchId property, which must be set prior to this call.
+     * @return {Promise} A promise that resolves when all pages have been retrieved.  The gamesToPost property will then contain all of the matches that need posting.
+     */
     getPage(pageId) {
-        const update = Update;
+        const update = this;
 
         return new Promise((resolve, reject) => {
             get(`http://descentchampions.org/recent_matches.php?page=${pageId}`, (res) => {
@@ -213,7 +246,7 @@ class Update {
                                             }
                                     }
 
-                                    gamesToPost[gameId] = `${leftTier.replace(leftTier[0], leftTier[0].toUpperCase())} #${game.find(".left_player .rank_badge").text()
+                                    update.gamesToPost[gameId] = `${leftTier.replace(leftTier[0], leftTier[0].toUpperCase())} #${game.find(".left_player .rank_badge").text()
                                         .substring(2)} ${game.find(".left_player .pilot_name").text()} def ${rightTier.replace(rightTier[0], rightTier[0].toUpperCase())} #${game.find(".right_player .rank_badge").text()
                                         .substring(2)} ${game.find(".right_player .pilot_name").text()} ${leftScore} to ${rightScore}${suicides === "" ? "" : ` w/ ${game.find("span:not([class]):first()").text()}`} ${game.find(".level_name").text()}${tags === "" ? "" : tags} http://descentchampions.org/${game.attr("href")}`;
                                 }
@@ -237,10 +270,11 @@ class Update {
 process.on("message", () => {
     const update = new Update();
 
-    db.query("SELECT MatchID FROM tblLastMatch", {}).then((data) => {
-        
+    db.query("SELECT MatchID FROM tblLastMatch").then((data) => {
+        ({recordset: [{MatchID: update.lastMatchId}]} = data);
     })
         .then(() => update.getPage(0))
-        .then(() => console.log(gamesToPost))
+        .then(() => console.log(update.gamesToPost))
+        .then(() => db.query("UPDATE tblLastMatch SET MatchID = @matchId", {matchId: {type: db.INT, value: update.maxId}}))
         .catch(console.log);
 });
