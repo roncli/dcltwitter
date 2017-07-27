@@ -29,44 +29,49 @@ class Database {
                 params = {};
             }
 
-            const conn = new sql.Connection(settings.database, (err) => {
-                const paramKeys = Object.keys(params);
+            const conn = new sql.ConnectionPool(settings.database, (errPool) => {
 
-                if (err) {
-                    reject(err);
+                if (errPool) {
+                    reject(errPool);
                     return;
                 }
 
                 const ps = new sql.PreparedStatement(conn);
-                paramKeys.forEach((key) => {
+
+                Object.keys(params).forEach((key) => {
                     ps.input(key, params[key].type);
                 });
                 ps.multiple = true;
                 ps.prepare(sqlStr, (errPrepare) => {
+                    const paramList = {};
+
                     if (errPrepare) {
                         reject(errPrepare);
                         return;
                     }
 
-                    ps.execute(paramKeys.reduce((acc, key) => {
-                        ({[key]: {value: acc[key]}} = params);
+                    const paramMap = Object.keys(params).map((key) => [key, params[key].value]);
 
-                        return acc;
-                    }, {}), (errExecute, data) => {
-                        if (errExecute) {
-                            reject(errExecute);
-                            return;
-                        }
+                    for (let i = 0, {length} = Object.keys(paramMap); i < length; i++) {
+                        paramList[paramMap[i][0]] = paramMap[i][1];
+                    }
 
-                        ps.unprepare((errUnprepare) => {
-                            if (err) {
-                                reject(errUnprepare);
+                    ps.execute(
+                        paramList, (errExecute, data) => {
+                            if (errExecute) {
+                                reject(errExecute);
                                 return;
                             }
 
-                            resolve(data);
-                        });
-                    });
+                            ps.unprepare((errUnprepare) => {
+                                if (errUnprepare) {
+                                    reject(errUnprepare);
+                                    return;
+                                }
+                                resolve(data);
+                            });
+                        }
+                    );
                 });
             });
         });
@@ -76,8 +81,10 @@ class Database {
 ({TYPES: Database.TYPES} = sql);
 
 Object.keys(sql.TYPES).forEach((key) => {
-    ({TYPES: {[key]: Database[key]}} = sql);
-    ({TYPES: {[key]: Database[key.toUpperCase()]}} = sql);
+    const {TYPES: {[key]: value}} = sql;
+
+    Database[key] = value;
+    Database[key.toUpperCase()] = value;
 });
 
 module.exports = Database;

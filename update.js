@@ -1,4 +1,5 @@
 const {get} = require("http"),
+    db = require("./database"),
     viewMatchRegex = /view_match\.php\?id=(\d+)/,
     {JSDOM} = require("jsdom"),
     $ = require("jquery")(new JSDOM().window),
@@ -236,8 +237,10 @@ class Update {
 process.on("message", () => {
     const update = new Update();
 
-    update.getPage(0).then(() => {
-        console.log(gamesToPost);
+    db.query("SELECT MatchID FROM tblLastMatch", {}).then((data) => {
+        
     })
+        .then(() => update.getPage(0))
+        .then(() => console.log(gamesToPost))
         .catch(console.log);
 });

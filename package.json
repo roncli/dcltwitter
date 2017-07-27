@@ -17,6 +17,7 @@
     "dependencies": {
         "jquery": "3.2.1",
         "jsdom": "11.1.0",
+        "mssql": "4.0.4",
         "twitter": "1.7.1"
     }
 }
