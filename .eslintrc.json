@@ -15,6 +15,7 @@
     "rules": {
         "array-element-newline": "off",
         "capitalized-comments": "off",
+        "camelcase": "off",
         "class-methods-use-this": "off",
         "complexity": "off",
         "consistent-this": "off",
@@ -33,6 +34,7 @@
         "max-params": "off",
         "max-statements": "off",
         "multiline-ternary": "off",
+        "newline-per-chained-call": "off",
         "no-confusing-arrow": "off",
         "no-continue": "off",
         "no-empty-function": "off",

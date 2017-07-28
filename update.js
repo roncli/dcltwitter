@@ -1,7 +1,9 @@
 const {get} = require("http"),
     {JSDOM} = require("jsdom"),
+    Twitter = require("twitter"),
     $ = require("jquery")(new JSDOM().window),
     db = require("./database"),
+    {twitter} = require("./settings"),
     viewMatchRegex = /view_match\.php\?id=(\d+)/,
     dominationMatrix = {
         "bronze-unrated": 10,
@@ -156,6 +158,8 @@ class Update {
                                         rightScore = +game.find(".right_player .score").text(),
                                         leftTier = game.find(".left_player:first() > span:last()").attr("class"),
                                         rightTier = game.find(".right_player:first() > span:first()").attr("class"),
+                                        leftRank = game.find(".left_player .rank_badge").text().substring(2),
+                                        rightRank = game.find(".right_player .rank_badge").text().substring(2),
                                         tiers = `${leftTier}-${rightTier}`,
                                         suicides = game.find("td[colspan=2] span:not([class])").text();
 
@@ -246,9 +250,7 @@ class Update {
                                             }
                                     }
 
-                                    update.gamesToPost[gameId] = `${leftTier.replace(leftTier[0], leftTier[0].toUpperCase())} #${game.find(".left_player .rank_badge").text()
-                                        .substring(2)} ${game.find(".left_player .pilot_name").text()} def ${rightTier.replace(rightTier[0], rightTier[0].toUpperCase())} #${game.find(".right_player .rank_badge").text()
-                                        .substring(2)} ${game.find(".right_player .pilot_name").text()} ${leftScore} to ${rightScore}${suicides === "" ? "" : ` w/ ${game.find("span:not([class]):first()").text()}`} ${game.find(".level_name").text()}${tags === "" ? "" : tags} http://descentchampions.org/${game.attr("href")}`;
+                                    update.gamesToPost[gameId] = `${leftTier.replace(leftTier[0], leftTier[0].toUpperCase())} ${leftRank.length === 0 ? "" : `${leftRank}) `}${game.find(".left_player .pilot_name").text()} def. ${rightTier.replace(rightTier[0], rightTier[0].toUpperCase())} ${rightRank.length === 0 ? "" : `${rightRank}) `}${game.find(".right_player .pilot_name").text()} ${leftScore} to ${rightScore}${suicides === "" ? "" : ` w/ ${game.find("span:not([class]):first()").text()}`} ${game.find(".level_name").text()}${tags === "" ? "" : tags} http://descentchampions.org/${game.attr("href")}`;
                                 }
                             }
                         });
@@ -265,6 +267,25 @@ class Update {
             });
         });
     }
+
+    //  #                       #
+    //  #                       #
+    // ###   #  #   ##    ##   ###
+    //  #    #  #  # ##  # ##   #
+    //  #    ####  ##    ##     #
+    //   ##  ####   ##    ##     ##
+    /**
+     * Tweets out matches.
+     * @return {void}
+     */
+    tweet() {
+        const update = this,
+            client = new Twitter(twitter);
+
+        Object.keys(update.gamesToPost).forEach((index) => {
+            client.post("statuses/update", {status: update.gamesToPost[index]});
+        });
+    }
 }
 
 process.on("message", () => {
@@ -274,7 +295,7 @@ process.on("message", () => {
         ({recordset: [{MatchID: update.lastMatchId}]} = data);
     })
         .then(() => update.getPage(0))
-        .then(() => console.log(update.gamesToPost))
+        .then(() => update.tweet())
         .then(() => db.query("UPDATE tblLastMatch SET MatchID = @matchId", {matchId: {type: db.INT, value: update.maxId}}))
         .catch(console.log);
 });

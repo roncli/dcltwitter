@@ -1,4 +1,4 @@
-const settings = require("./settings"),
+const {database} = require("./settings"),
     sql = require("mssql");
 
 //  ####           #            #
@@ -29,7 +29,7 @@ class Database {
                 params = {};
             }
 
-            const conn = new sql.ConnectionPool(settings.database, (errPool) => {
+            const conn = new sql.ConnectionPool(database, (errPool) => {
 
                 if (errPool) {
                     reject(errPool);

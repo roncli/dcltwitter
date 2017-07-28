@@ -1,7 +1,7 @@
 {
     "name": "dcltwitter",
     "productName": "DCL Twitter",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "The Twitter bot for the Descent Champions Ladder.",
     "main": "index.js",
     "author": {
