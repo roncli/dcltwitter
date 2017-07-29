@@ -47,6 +47,7 @@
         "no-nested-ternary": "off",
         "no-param-reassign": "off",
         "no-plusplus": "off",
+        "no-process-exit": "off",
         "no-return-assign": "off",
         "no-trailing-spaces": ["error", {"ignoreComments": false}],
         "no-ternary": "off",

@@ -276,14 +276,28 @@ class Update {
     //   ##  ####   ##    ##     ##
     /**
      * Tweets out matches.
-     * @return {void}
+     * @return {Promise} A promise that resolves when the tweet has successfully been sent.
      */
     tweet() {
-        const update = this,
-            client = new Twitter(twitter);
+        const update = this;
+        return new Promise((resolve, reject) => {
+            const client = new Twitter(twitter),
+                fxs = [];
 
-        Object.keys(update.gamesToPost).forEach((index) => {
-            client.post("statuses/update", {status: update.gamesToPost[index]});
+            Object.keys(update.gamesToPost).forEach((index) => {
+                fxs.push(new Promise((innerResolve, innerReject) => {
+                    client.post("statuses/update", {status: update.gamesToPost[index]}, (err) => {
+                        if (err) {
+                            innerReject(err);
+                            return;
+                        }
+
+                        innerResolve();
+                    });
+                }));
+            });
+
+            Promise.all(fxs).then(resolve).catch(reject);
         });
     }
 }
@@ -297,5 +311,9 @@ process.on("message", () => {
         .then(() => update.getPage(0))
         .then(() => update.tweet())
         .then(() => db.query("UPDATE tblLastMatch SET MatchID = @matchId", {matchId: {type: db.INT, value: update.maxId}}))
-        .catch(console.log);
+        .then(() => process.exit())
+        .catch((err) => {
+            console.log(err);
+            process.exit();
+        });
 });
