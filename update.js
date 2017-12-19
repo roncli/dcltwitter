@@ -288,7 +288,8 @@ class Update {
                 fxs.push(new Promise((innerResolve, innerReject) => {
                     client.post("statuses/update", {status: update.gamesToPost[index]}, (err) => {
                         if (err) {
-                            innerReject(err);
+                            // TODO: Log the error better.  Right now, rejecting causes other issues.
+                            // innerReject(err);
                             return;
                         }
 
@@ -309,8 +310,8 @@ process.on("message", () => {
         ({recordset: [{MatchID: update.lastMatchId}]} = data);
     })
         .then(() => update.getPage(0))
-        .then(() => update.tweet())
         .then(() => db.query("UPDATE tblLastMatch SET MatchID = @matchId", {matchId: {type: db.INT, value: update.maxId}}))
+        .then(() => update.tweet())
         .then(() => process.exit())
         .catch((err) => {
             console.log(err);
