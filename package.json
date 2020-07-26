@@ -1,13 +1,11 @@
 {
     "name": "dcltwitter",
-    "productName": "DCL Twitter",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "The Twitter bot for the Descent Champions Ladder.",
-    "main": "index.js",
     "author": {
         "email": "roncli@roncli.com",
         "name": "Ronald M. Clifford",
-        "url": "http://www.roncli.com"
+        "url": "https://www.roncli.com"
     },
     "repository": {
         "type": "git",
@@ -15,9 +13,11 @@
     },
     "license": "MIT",
     "dependencies": {
-        "jquery": "3.2.1",
-        "jsdom": "11.1.0",
-        "mssql": "4.0.4",
-        "twitter": "1.7.1"
+        "@azure/arm-appservice": "6.0.0",
+        "@azure/ms-rest-nodeauth": "3.0.5",
+        "@root/request": "1.6.1",
+        "jsdom": "16.3.0",
+        "jquery": "3.5.1",
+        "twitter-lite": "0.14.0"
     }
 }
