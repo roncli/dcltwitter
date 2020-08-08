@@ -1,7 +1,11 @@
 # dcltwitter
-The Twitter bot for the Descent Champions League.  https://twitter.com/dcl_reports
+The Twitter bot for the Descent Champions Legacy.  https://twitter.com/dcl_reports
 
 ## Version History
+
+### v2.0.1 - 8/7/2020
+
+Descent Champions Legacy support.
 
 ### v2.0.0 - 7/26/2020
 
