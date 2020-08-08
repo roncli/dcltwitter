@@ -47,7 +47,7 @@ const jsdom = require("jsdom"),
         "retired-gold": -99999,
         "retired-diamond": -99999,
         "retired-retired": -99999
-        
+
     },
     threatMatrix = {
         "bronze-unrated": false,
@@ -151,17 +151,24 @@ class DCL {
      * @returns {Game[]} An array of game objects.
      */
     static async getGames(sinceGameId, pageId = 0) {
-        const res = await request(`http://descentchampions.org/test/recent_matches.php?page=${pageId}`),
+        const res = await request(`http://descentchampions.org/recent_matches.php?page=${pageId}`),
             body = `<div>${res.body.replace(/^[\s\S]*<body.*?>|<\/body>[\s\S]*$/ig, "")}</div>`,
             games = [];
 
         let noMoreGames = false;
 
-        $(body).find(".content > a[href^=view_match]").each((index, el) => {
+        const els = $(body).find(".content > a[href^=view_match]");
+
+        if (els.length === 0) {
+            noMoreGames = true;
+        }
+
+        els.each((index, el) => {
             const game = $(el),
                 href = game.attr("href");
 
             if (!viewMatchRegex.test(href)) {
+                noMoreGames = true;
                 return;
             }
 
@@ -302,7 +309,7 @@ class DCL {
                 }
         }
 
-        return `${game.leftTier.replace(/^./, game.leftTier[0].toUpperCase())} ${game.leftRank.length === 0 ? "" : `${game.leftRank}) `}${game.leftName} def. ${game.rightTier.replace(/^./, game.rightTier[0].toUpperCase())} ${game.rightRank.length === 0 ? "" : `${game.rightRank}) `}${game.rightName} ${game.leftScore} to ${game.rightScore}${game.suicides === "" ? "" : ` w/ ${game.suicides}`} ${game.level}${tags} http://descentchampions.org/view_match.php?id=${game.gameId}`;
+        return `${game.leftTier ? game.leftTier.replace(/^./, game.leftTier[0].toUpperCase()) : ""} ${game.leftRank.length === 0 ? "" : `${game.leftRank}) `}${game.leftName} def. ${game.rightTier ? game.rightTier.replace(/^./, game.rightTier[0].toUpperCase()) : ""} ${game.rightRank.length === 0 ? "" : `${game.rightRank}) `}${game.rightName} ${game.leftScore} to ${game.rightScore}${game.suicides === "" ? "" : ` w/ ${game.suicides}`} ${game.level}${tags} http://descentchampions.org/view_match.php?id=${game.gameId}`;
     }
 }
 
