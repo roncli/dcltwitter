@@ -47,7 +47,6 @@ const jsdom = require("jsdom"),
         "retired-gold": -99999,
         "retired-diamond": -99999,
         "retired-retired": -99999
-
     },
     threatMatrix = {
         "bronze-unrated": false,
