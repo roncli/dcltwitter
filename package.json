@@ -13,7 +13,7 @@
     },
     "license": "MIT",
     "dependencies": {
-        "@azure/arm-appservice": "6.1.0",
+        "@azure/arm-appservice": "9.0.0",
         "@azure/ms-rest-nodeauth": "3.0.10",
         "@root/request": "1.7.0",
         "jsdom": "17.0.0",
