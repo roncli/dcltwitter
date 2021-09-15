@@ -14,14 +14,14 @@
     "license": "MIT",
     "dependencies": {
         "@azure/arm-appservice": "6.1.0",
-        "@azure/ms-rest-nodeauth": "3.0.6",
-        "@root/request": "1.6.1",
+        "@azure/ms-rest-nodeauth": "3.0.10",
+        "@root/request": "1.7.0",
         "jsdom": "16.4.0",
-        "jquery": "3.5.1",
+        "jquery": "3.6.0",
         "twitter-lite": "0.14.0"
     },
     "devDependencies": {
-        "@babel/core": "7.12.9",
-        "@babel/eslint-parser": "7.12.1"
+        "@babel/core": "7.15.5",
+        "@babel/eslint-parser": "7.15.4"
     }
 }
