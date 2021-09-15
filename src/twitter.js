@@ -29,6 +29,8 @@ class TwitterPost {
     static async post(status) {
         if (!client) {
             client = new Twitter({
+                "version": "2",
+                "extension": false,
                 "consumer_key": process.env.TwitterConsumerKey,
                 "consumer_secret": process.env.TwitterConsumerSecret,
                 "access_token_key": process.env.TwitterAccessTokenKey,
