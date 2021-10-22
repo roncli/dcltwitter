@@ -3,6 +3,10 @@ The Twitter bot for the Descent Champions Legacy.  https://twitter.com/dcl_repor
 
 ## Version History
 
+### v2.0.5 - 10/22/2021
+
+Package updates.
+
 ### v2.0.4 - 9/15/2021
 
 Use Twitter v2 API.
