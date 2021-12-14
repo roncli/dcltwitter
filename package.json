@@ -21,7 +21,7 @@
         "twitter-lite": "1.1.0"
     },
     "devDependencies": {
-        "@babel/core": "7.16.0",
+        "@babel/core": "7.16.5",
         "@babel/eslint-parser": "7.16.3"
     }
 }
